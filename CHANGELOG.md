@@ -10,10 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/
 ## [Unreleased]
 
 ### Added
-- 创建设计文档目录结构
+- 
 
 ### Changed
-- CLI 计算功能优化
+- 
 
 ---
 
@@ -37,10 +37,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/
 - Web 页面 (`src/calculator.html`)
   - 可视化计算器界面
   - 支持键盘输入
+- 完整测试套件
+  - SDK 单元测试 (16个用例)
+  - API 集成测试 (11个用例)
+  - 端到端验收测试 (4个场景)
+  - 代码覆盖率支持 (nyc)
 - CI/CD 配置 (`.github/workflows/ci.yml`)
 - 研发管理规范 (`rules/`)
   - WORKFLOW.zh.md - 开发流程
   - RELEASE.zh.md - 版本发布规范
+  - TESTING.zh.md - 测试规范
 
 ### Features
 

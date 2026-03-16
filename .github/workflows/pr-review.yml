@@ -1,0 +1,172 @@
+name: PR Review Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-checklist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: PR Checklist Review
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            
+            // 检查 PR 描述中的检查清单
+            const uncheckedItems = (body.match(/- \[ \]/g) || []).length;
+            const checkedItems = (body.match(/- \[x\]/gi) || []).length;
+            
+            let comment = '';
+            
+            // 生成评论内容
+            if (uncheckedItems > 0) {
+              comment += `## ⚠️ PR 检查清单未完成\n\n`;
+              comment += `还有 **${uncheckedItems}** 项检查未完成，请完成所有检查项后再请求 review。\n\n`;
+            }
+            
+            // 检查关键文件变更
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            const hasChangelog = files.some(f => f.filename === 'CHANGELOG.md');
+            const hasTest = files.some(f => f.filename.startsWith('test/'));
+            const hasDoc = files.some(f => f.filename.startsWith('docs/'));
+            
+            comment += `## 📋 自动检查报告\n\n`;
+            comment += `### 文件变更检查\n\n`;
+            comment += `- ${hasChangelog ? '✅' : '⚠️'} CHANGELOG.md ${hasChangelog ? '已更新' : '未更新（如需要请更新）'}\n`;
+            comment += `- ${hasTest ? '✅' : '⚠️'} 测试文件 ${hasTest ? '已更新' : '未更新（如需要请添加）'}\n`;
+            comment += `- ${hasDoc ? '✅' : '⚠️'} 设计文档 ${hasDoc ? '已更新' : '未更新'}\n\n`;
+            
+            // 检查提交信息规范
+            const { data: commits } = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            const invalidCommits = commits.filter(commit => {
+              const msg = commit.commit.message.split('\n')[0];
+              return !msg.match(/^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+/);
+            });
+            
+            if (invalidCommits.length > 0) {
+              comment += `### ⚠️ 提交信息规范检查\n\n`;
+              comment += `发现 **${invalidCommits.length}** 个提交不符合规范，请使用 Conventional Commits 格式。\n\n`;
+              comment += `示例：\`feat(cli): add new command\`\n\n`;
+            }
+            
+            // 添加建议
+            comment += `### 💡 Reviewer 检查建议\n\n`;
+            comment += `- [ ] 代码逻辑是否正确\n`;
+            comment += `- [ ] 是否有对应的测试用例\n`;
+            comment += `- [ ] 文档是否同步更新\n`;
+            comment += `- [ ] 是否存在性能问题\n`;
+            comment += `- [ ] 是否向后兼容\n\n`;
+            
+            comment += `---\n`;
+            comment += `*这是自动生成的评论，如有问题请联系维护者。*`;
+            
+            // 创建评论
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: comment
+            });
+
+  pr-size-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Check PR Size
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const additions = pr.additions;
+            const deletions = pr.deletions;
+            const totalChanges = additions + deletions;
+            
+            let label = '';
+            let message = '';
+            
+            if (totalChanges < 50) {
+              label = 'size: XS';
+              message = '✅ PR 规模很小，易于 review';
+            } else if (totalChanges < 200) {
+              label = 'size: S';
+              message = '✅ PR 规模较小，适合快速 review';
+            } else if (totalChanges < 500) {
+              label = 'size: M';
+              message = '⚠️ PR 规模中等，请仔细 review';
+            } else if (totalChanges < 1000) {
+              label = 'size: L';
+              message = '⚠️ PR 规模较大，建议拆分';
+            } else {
+              label = 'size: XL';
+              message = '❌ PR 规模过大，强烈建议拆分';
+            }
+            
+            // 添加标签
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: [label]
+              });
+            } catch (e) {
+              console.log('Label may already exist');
+            }
+            
+            // 如果 PR 过大，添加警告评论
+            if (totalChanges > 500) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `## ⚠️ PR 规模警告\n\n${message}\n\n- 新增: ${additions} 行\n- 删除: ${deletions} 行\n- 总计: ${totalChanges} 行\n\n建议将大型 PR 拆分为多个小型 PR，以提高 review 效率。`
+              });
+            }
+
+  welcome-first-pr:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+    steps:
+      - name: Welcome First PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            // 检查是否是用户的第一个 PR
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100
+            });
+            
+            const userPrs = prs.filter(p => p.user.login === pr.user.login);
+            
+            if (userPrs.length === 1) {
+              // 第一个 PR
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `## 🎉 欢迎贡献！\n\n@${pr.user.login}，感谢你提交第一个 Pull Request！\n\n请确保：\n- [ ] 阅读了 [贡献指南](../blob/main/rules/CONTRIBUTING.zh.md)\n- [ ] 完成了 PR 模板中的检查清单\n- [ ] 所有 CI 检查通过\n\n如有任何问题，欢迎随时提问！`
+              });
+            }

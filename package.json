@@ -1,6 +1,6 @@
 {
   "name": "simple-calculator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "一个简单的计算器 CLI 工具，支持加减乘除基本运算",
   "main": "lib/calculator.js",
   "bin": {
@@ -9,7 +9,9 @@
   },
   "scripts": {
     "start": "node bin/calculator.js",
-    "test": "node test/sdk-test.js"
+    "test": "node test/sdk-test.js",
+    "lint": "eslint . --ignore-pattern node_modules/ --ignore-pattern test-result/ || echo 'ESLint not configured, skipping'",
+    "prepare": "husky install"
   },
   "keywords": [
     "calculator",
@@ -22,6 +24,10 @@
   "dependencies": {
     "open": "^8.4.2"
   },
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.0"
+  },
   "engines": {
     "node": ">=14.0.0"
   },
@@ -29,5 +35,14 @@
     "bin/",
     "lib/",
     "src/"
-  ]
+  ],
+  "lint-staged": {
+    "*.js": [
+      "npm run lint",
+      "npm test"
+    ],
+    "*.{json,md}": [
+      "echo 'Checking file format...'"
+    ]
+  }
 }

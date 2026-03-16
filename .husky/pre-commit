@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  🚀 Running pre-commit checks..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# 运行 lint-staged
+npx lint-staged
+
+# 检查测试文件是否存在
+if [ ! -f "test/sdk-test.js" ]; then
+    echo "❌ Error: test/sdk-test.js not found!"
+    exit 1
+fi
+
+echo ""
+echo "✅ Pre-commit checks passed!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

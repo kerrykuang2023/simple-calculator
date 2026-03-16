@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  📝 Checking commit message format..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# 读取提交信息
+commit_msg_file="$1"
+commit_msg=$(cat "$commit_msg_file")
+
+# 定义提交信息规范
+# 格式: <type>(<scope>): <subject>
+# type: feat|fix|docs|style|refactor|test|chore
+valid_pattern="^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+"
+
+if ! echo "$commit_msg" | grep -qE "$valid_pattern"; then
+    echo ""
+    echo "❌ Invalid commit message format!"
+    echo ""
+    echo "Expected format: <type>(<scope>): <subject>"
+    echo ""
+    echo "Valid types:"
+    echo "  feat:     新功能"
+    echo "  fix:      Bug 修复"
+    echo "  docs:     文档更新"
+    echo "  style:    代码格式调整"
+    echo "  refactor: 代码重构"
+    echo "  test:     测试相关"
+    echo "  chore:    构建/工具变动"
+    echo ""
+    echo "Examples:"
+    echo "  feat(cli): add subtract command"
+    echo "  fix(api): handle division by zero"
+    echo "  docs(readme): update usage examples"
+    echo ""
+    exit 1
+fi
+
+echo "✅ Commit message format is valid!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

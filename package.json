@@ -1,0 +1,33 @@
+{
+  "name": "simple-calculator",
+  "version": "1.0.0",
+  "description": "一个简单的计算器 CLI 工具，支持加减乘除基本运算",
+  "main": "lib/calculator.js",
+  "bin": {
+    "calculator": "./bin/calculator.js",
+    "calc": "./bin/calculator.js"
+  },
+  "scripts": {
+    "start": "node bin/calculator.js",
+    "test": "node test/sdk-test.js"
+  },
+  "keywords": [
+    "calculator",
+    "cli",
+    "math",
+    "sdk"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "open": "^8.4.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "src/"
+  ]
+}

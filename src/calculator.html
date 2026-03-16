@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单计算器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .calculator { background: #fff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); padding: 30px; width: 100%; max-width: 400px; }
+        .calculator-title { text-align: center; color: #333; margin-bottom: 20px; font-size: 24px; font-weight: 600; }
+        .display { background: #1a1a2e; color: #fff; font-size: 36px; text-align: right; padding: 20px; border-radius: 10px; margin-bottom: 20px; min-height: 80px; display: flex; flex-direction: column; justify-content: center; word-break: break-all; }
+        .display-expression { font-size: 16px; color: #888; margin-bottom: 5px; }
+        .display-value { font-size: 36px; font-weight: 500; }
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .btn { padding: 20px; font-size: 20px; border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; font-weight: 500; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+        .btn:active { transform: translateY(0); }
+        .btn-number { background: #f0f0f0; color: #333; }
+        .btn-number:hover { background: #e0e0e0; }
+        .btn-operator { background: #667eea; color: #fff; }
+        .btn-operator:hover { background: #5a6fd6; }
+        .btn-clear { background: #ff6b6b; color: #fff; }
+        .btn-clear:hover { background: #ee5a5a; }
+        .btn-equals { background: #4ecdc4; color: #fff; grid-column: span 2; }
+        .btn-equals:hover { background: #3dbdb5; }
+        .btn-zero { grid-column: span 2; }
+        .error { color: #ff6b6b; font-size: 14px; text-align: center; margin-top: 10px; min-height: 20px; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1 class="calculator-title">简单计算器</h1>
+        <div class="display">
+            <div class="display-expression" id="expression"></div>
+            <div class="display-value" id="display">0</div>
+        </div>
+        <div class="buttons">
+            <button class="btn btn-clear" onclick="clearAll()">C</button>
+            <button class="btn btn-clear" onclick="clearEntry()">CE</button>
+            <button class="btn btn-operator" onclick="backspace()">⌫</button>
+            <button class="btn btn-operator" onclick="setOperator('/')">÷</button>
+            <button class="btn btn-number" onclick="appendNumber('7')">7</button>
+            <button class="btn btn-number" onclick="appendNumber('8')">8</button>
+            <button class="btn btn-number" onclick="appendNumber('9')">9</button>
+            <button class="btn btn-operator" onclick="setOperator('*')">×</button>
+            <button class="btn btn-number" onclick="appendNumber('4')">4</button>
+            <button class="btn btn-number" onclick="appendNumber('5')">5</button>
+            <button class="btn btn-number" onclick="appendNumber('6')">6</button>
+            <button class="btn btn-operator" onclick="setOperator('-')">−</button>
+            <button class="btn btn-number" onclick="appendNumber('1')">1</button>
+            <button class="btn btn-number" onclick="appendNumber('2')">2</button>
+            <button class="btn btn-number" onclick="appendNumber('3')">3</button>
+            <button class="btn btn-operator" onclick="setOperator('+')">+</button>
+            <button class="btn btn-number btn-zero" onclick="appendNumber('0')">0</button>
+            <button class="btn btn-number" onclick="appendDecimal()">.</button>
+            <button class="btn btn-equals" onclick="calculate()">=</button>
+        </div>
+        <div class="error" id="error"></div>
+    </div>
+    <script>
+        let currentValue = '0';
+        let previousValue = '';
+        let operator = null;
+        let shouldResetDisplay = false;
+        const display = document.getElementById('display');
+        const expression = document.getElementById('expression');
+        const errorDiv = document.getElementById('error');
+
+        function updateDisplay() {
+            display.textContent = currentValue;
+            if (operator && previousValue) {
+                const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[operator];
+                expression.textContent = `${previousValue} ${opSymbol}`;
+            } else {
+                expression.textContent = '';
+            }
+        }
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            setTimeout(() => { errorDiv.textContent = ''; }, 3000);
+        }
+
+        function clearError() { errorDiv.textContent = ''; }
+
+        function appendNumber(num) {
+            clearError();
+            if (shouldResetDisplay) { currentValue = num; shouldResetDisplay = false; }
+            else { if (currentValue === '0' && num !== '0') currentValue = num; else if (currentValue !== '0') currentValue += num; }
+            updateDisplay();
+        }
+
+        function appendDecimal() {
+            clearError();
+            if (shouldResetDisplay) { currentValue = '0.'; shouldResetDisplay = false; }
+            else if (!currentValue.includes('.')) currentValue += '.';
+            updateDisplay();
+        }
+
+        function setOperator(op) {
+            clearError();
+            if (operator && !shouldResetDisplay) calculate();
+            previousValue = currentValue;
+            operator = op;
+            shouldResetDisplay = true;
+            updateDisplay();
+        }
+
+        function calculate() {
+            if (!operator || !previousValue) return;
+            clearError();
+            const prev = parseFloat(previousValue);
+            const current = parseFloat(currentValue);
+            let result;
+            switch (operator) {
+                case '+': result = prev + current; break;
+                case '-': result = prev - current; break;
+                case '*': result = prev * current; break;
+                case '/': if (current === 0) { showError('错误：不能除以零'); return; } result = prev / current; break;
+                default: return;
+            }
+            result = Math.round(result * 1000000000) / 1000000000;
+            currentValue = result.toString();
+            previousValue = '';
+            operator = null;
+            shouldResetDisplay = true;
+            updateDisplay();
+        }
+
+        function clearAll() { currentValue = '0'; previousValue = ''; operator = null; shouldResetDisplay = false; clearError(); updateDisplay(); }
+        function clearEntry() { currentValue = '0'; shouldResetDisplay = false; clearError(); updateDisplay(); }
+        function backspace() { clearError(); if (currentValue.length > 1) currentValue = currentValue.slice(0, -1); else currentValue = '0'; updateDisplay(); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') appendNumber(e.key);
+            else if (e.key === '.') appendDecimal();
+            else if (e.key === '+') setOperator('+');
+            else if (e.key === '-') setOperator('-');
+            else if (e.key === '*') setOperator('*');
+            else if (e.key === '/') { e.preventDefault(); setOperator('/'); }
+            else if (e.key === 'Enter' || e.key === '=') calculate();
+            else if (e.key === 'Escape') clearAll();
+            else if (e.key === 'Backspace') backspace();
+        });
+
+        updateDisplay();
+    </script>
+</body>
+</html>

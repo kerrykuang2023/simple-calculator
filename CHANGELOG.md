@@ -10,10 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/lang/zh-CN/
 ## [Unreleased]
 
 ### Added
-- 创建设计文档目录结构
+- 
 
 ### Changed
-- CLI 计算功能优化
+- 
+
+### Fixed
+- 
+
+---
+
+## [1.0.1] - 2026-03-16
+
+### Fixed
+- 修复 CI 测试失败问题
+  - 补充缺失的 `test/sdk-test.js` 测试文件
+  - 确保 `npm test` 命令正常运行
 
 ---
 
